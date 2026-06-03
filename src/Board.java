@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class Board {
     Piece[][] board;
@@ -49,79 +50,131 @@ public class Board {
             System.out.println("   A B C D E F G H");
         }
         else {
-            System.out.print("Not implemented yet");
+            Coordinate c;
+
+            for (int row = 0; row < 8; row++) {
+                System.out.print( (8 - row) + " |");
+                for (int column = 0; column < 8; column++) {
+                    c = Coordinate.newCoordinate(column, row);
+                    Piece p = getPiece(c);
+                    if (p == null && selectedPiece.isValidMove(c)) {
+                        System.out.print("\u001B[32m" + '●' + "\u001B[0m");
+                    }
+                    else if (p == null) {
+                        System.out.print(' ');
+                    }
+                    else {
+                        System.out.print(p.getSymbol());
+                    }
+                    System.out.print('|');
+                }
+                System.out.println();
+            }
+
+            System.out.println("   A B C D E F G H");
         }
     }
 
-    // Gets a list of possible moves for a Piece at the currentPos, with the properties of the piece at originalPos
-    // currentPos and originalPos should be the same when called by another method
-    public ArrayList<Coordinate> getPossibleMoves(Coordinate currentPos, Coordinate originalPos) {
-        ArrayList<Coordinate> possibleMoves = new ArrayList<>();
+    // Promotes any pieces that can promote
+    // Updates possible moves for all pieces
+    public void updatePieces() {
+        for (int row = 0; row < 8; row++) {
+            for (Piece piece : board[row]) if (piece != null) {
+                    if (piece.canPromote()) piece.promote();
+                    getPossibleMoves(piece);
+            }
+        }
+    }
 
-        Piece selectedPiece = getPiece(originalPos);
+    // Gets a list of possible moves for a piece
+    public void getPossibleMoves(Piece p) {
+        ArrayList<Move> possibleMoves = new ArrayList<>();
 
-        int x = currentPos.getX();
-        int y = currentPos.getY();
-        int state = selectedPiece.state;
+        ArrayList<Coordinate> targetCoordinates = getTargetCoordinates(p.getPos(), p.getState(), p.isKing());
 
+        for (Coordinate targetPos : targetCoordinates) {
+            Piece target = getPiece(targetPos);
+
+            // If target is empty add as a possible move
+            if (target == null) {
+                possibleMoves.add(new Move(targetPos));
+            }
+
+            // If target is enemy piece checks if any pieces can be taken
+            else if (target.getState() != p.getState()) {
+                Coordinate newTargetPos = p.getPos().getCoordinateAfter(targetPos);
+
+                ArrayList<Piece> capturedPieces = new ArrayList<>();
+                capturedPieces.add(target);
+
+                ArrayList<Move> followUpMoves = getFollowUpMoves(p, capturedPieces, newTargetPos);
+                possibleMoves.addAll(followUpMoves);
+            }
+        }
+
+        p.updateMoves(possibleMoves);
+    }
+
+    // Helper method
+    // Checks if a piece can move to the followUpPos by taking a piece
+    // Recursively checks if any more pieces can be taken after
+    public ArrayList<Move> getFollowUpMoves(Piece p, ArrayList<Piece> capturedPieces, Coordinate followUpPos) {
+        ArrayList<Move> followUpMoves = new ArrayList<>();
+
+        // If the following position is invalid or there is already a piece at the following position no further moves can be made
+        if (followUpPos == null || getPiece(followUpPos) != null) {
+            return followUpMoves;
+        }
+        else {
+            followUpMoves.add(new Move(followUpPos, capturedPieces));
+        }
+
+        ArrayList<Coordinate> targetCoordinates = getTargetCoordinates(followUpPos, p.getState(), p.isKing());
+
+        for (Coordinate targetPos : targetCoordinates) {
+            Piece target = getPiece(targetPos);
+
+            // If target is enemy piece recursively checks if any more pieces can be taken
+            if (target != null && target.getState() != p.getState()) {
+                Coordinate newTargetPos = followUpPos.getCoordinateAfter(targetPos);
+
+                ArrayList<Piece> furtherCapturedPieces = new ArrayList<>(capturedPieces);
+                furtherCapturedPieces.add(target);
+
+                ArrayList<Move> furtherMoves = getFollowUpMoves(p, furtherCapturedPieces, newTargetPos);
+                followUpMoves.addAll(furtherMoves);
+            }
+        }
+
+        return followUpMoves;
+    }
+
+    // Returns a list of the coordinates diagonally adjacent to the given coordinate on the board.
+    // Gives only forward coordinates if not king.
+    public ArrayList<Coordinate> getTargetCoordinates(Coordinate c, int state, boolean isKing) {
         ArrayList<Coordinate> targetCoordinates = new ArrayList<>();
+
+        int x = c.getX();
+        int y = c.getY();
 
         // Forward Moves
         targetCoordinates.add(Coordinate.newCoordinate(x+1, y+state));
         targetCoordinates.add(Coordinate.newCoordinate(x-1, y+state));
 
         // Backwards Moves
-        if (selectedPiece.isKing) {
+        if (isKing) {
             targetCoordinates.add(Coordinate.newCoordinate(x+1, y-state));
             targetCoordinates.add(Coordinate.newCoordinate(x-1, y-state));
         }
 
-        // Removes the originalPos from targetCoordinates
-        if (originalPos != currentPos) {
-            targetCoordinates.remove(originalPos);
-        }
+        // Remove nulls
+        targetCoordinates.removeIf(Objects::isNull);
 
-        int i = 0;
-        Coordinate targetPos;
-        while (i < targetCoordinates.size()) {
-            targetPos = targetCoordinates.get(i);
-
-            // If invalid coordinate goes to next coordinate
-            if (targetPos == null) {
-                i++;
-                continue;
-            }
-
-            Piece target = getPiece(targetPos);
-            // If target is empty add as a possible move and goes to next coordinate
-            if (target == null) {
-                possibleMoves.add(targetPos);
-                i++;
-            }
-
-            // If target is ally piece goes to next coordinate
-            else if (state == target.state) {
-                i++;
-            }
-
-            // If target is enemy piece recursively checks next piece
-            else {
-                Coordinate newPos = selectedPiece.currentPos.getCoordinateAfter(targetPos);
-                ArrayList<Coordinate> newPossibleMoves = getPossibleMoves(newPos, originalPos);
-                possibleMoves.addAll(newPossibleMoves);
-                i++;
-            }
-        }
-
-        return possibleMoves;
+        return targetCoordinates;
     }
 
-    // Returns the piece at the given coordinate or null if c is null
+    // Returns the piece at the given coordinate
     public Piece getPiece(Coordinate c) {
-        if (c == null) return null;
-
-        int x = c.getX();
-        int y = c.getY();
-        return board[y][x];
+        return board[c.getY()][c.getX()];
     }
 }

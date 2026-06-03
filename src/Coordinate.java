@@ -54,8 +54,8 @@ class Coordinate {
         int cX = c.getX();
         int cY = c.getY();
 
-        int xDifference = this.x - cX;
-        int yDifference = this.y - cY;
+        int xDifference = cX - this.x;
+        int yDifference = cY - this.y;
 
         return newCoordinate(cX + xDifference, cY + yDifference);
     }
