@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 
+// Holds a coordinate to move to and a list of pieces captured on the way
 public class Move {
     private final Coordinate destination;
     private final ArrayList<Piece> capturedPieces;

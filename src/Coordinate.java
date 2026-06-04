@@ -1,3 +1,5 @@
+// Represents the x and y positions of each square on the checkerboard
+// Notates these positions using a letter and a number ranging from A1 - H8
 class Coordinate {
     private final int y;
     private final int x;

@@ -1,12 +1,15 @@
 import java.util.ArrayList;
-import java.util.Objects;
 
+// Represents the Checkers board
+// Holds a 8x8 grid of Pieces and a counter which marks whose turn it is
 public class Board {
-    Piece[][] board;
+    private Piece[][] board;
+    private int currentTurn; // White: 1, Black: -1
 
-    // Initialises board
+    // Constructor
     public Board() {
         board = new Piece[8][8];
+        currentTurn = -1;
 
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
@@ -29,13 +32,39 @@ public class Board {
         }
     }
 
-    // Prints the board state
-    // If a selectedPiece is given also highlights the possible moves
-    public void printBoard(Piece selectedPiece) {
+    // Returns the current turn;
+    public int getCurrentTurn() {
+        return currentTurn;
+    }
+
+    // Swaps the turn between 1 and -1
+    // 1: White and -1: Black
+    public void nextTurn() {
+        currentTurn *= -1;
+    }
+
+    // Prints the board
+    // Board will flip between turns if flipBoard is true
+    // If a selectedPiece is given highlights the possible moves
+    public void printBoard(Piece selectedPiece, boolean flipBoard) {
+        String turn = "Black's Turns";
+        int[] order = {0, 1, 2, 3, 4, 5, 6, 7};
+        String lettersRow = "   A B C D E F G H";
+
+        if (currentTurn == 1) {
+            turn = "White's Turns";
+            if (flipBoard) {
+                order = new int[]{7, 6, 5, 4, 3, 2, 1, 0};
+                lettersRow = "   H G F E D C B A";
+            }
+        }
+
+        System.out.println("   " + turn);
         if (selectedPiece == null) {
-            for (int row = 0; row < 8; row++) {
+            for (int row : order) {
                 System.out.print( (8 - row) + " |");
-                for (Piece piece : board[row]) {
+                for (int column : order) {
+                    Piece piece = board[row][column];
                     if (piece == null) {
                         System.out.print(' ');
                     }
@@ -47,14 +76,14 @@ public class Board {
                 System.out.println();
             }
 
-            System.out.println("   A B C D E F G H");
+            System.out.println(lettersRow);
         }
         else {
             Coordinate c;
 
-            for (int row = 0; row < 8; row++) {
+            for (int row : order) {
                 System.out.print( (8 - row) + " |");
-                for (int column = 0; column < 8; column++) {
+                for (int column : order) {
                     c = Coordinate.newCoordinate(column, row);
                     Piece p = getPiece(c);
                     if (p == null && selectedPiece.isValidMove(c)) {
@@ -71,7 +100,7 @@ public class Board {
                 System.out.println();
             }
 
-            System.out.println("   A B C D E F G H");
+            System.out.println(lettersRow);
         }
     }
 
@@ -86,11 +115,11 @@ public class Board {
         }
     }
 
-    // Gets a list of possible moves for a piece
+    // Updates the list of all possible moves for a piece
     public void getPossibleMoves(Piece p) {
         ArrayList<Move> possibleMoves = new ArrayList<>();
 
-        ArrayList<Coordinate> targetCoordinates = getTargetCoordinates(p.getPos(), p.getState(), p.isKing());
+        ArrayList<Coordinate> targetCoordinates = p.getAdjacentCoordinates(null);
 
         for (Coordinate targetPos : targetCoordinates) {
             Piece target = getPiece(targetPos);
@@ -129,13 +158,13 @@ public class Board {
             followUpMoves.add(new Move(followUpPos, capturedPieces));
         }
 
-        ArrayList<Coordinate> targetCoordinates = getTargetCoordinates(followUpPos, p.getState(), p.isKing());
+        ArrayList<Coordinate> targetCoordinates = p.getAdjacentCoordinates(followUpPos);
 
         for (Coordinate targetPos : targetCoordinates) {
             Piece target = getPiece(targetPos);
 
             // If target is enemy piece recursively checks if any more pieces can be taken
-            if (target != null && target.getState() != p.getState()) {
+            if (target != null && target.getState() != p.getState() && !capturedPieces.contains(target)) {
                 Coordinate newTargetPos = followUpPos.getCoordinateAfter(targetPos);
 
                 ArrayList<Piece> furtherCapturedPieces = new ArrayList<>(capturedPieces);
@@ -149,28 +178,52 @@ public class Board {
         return followUpMoves;
     }
 
-    // Returns a list of the coordinates diagonally adjacent to the given coordinate on the board.
-    // Gives only forward coordinates if not king.
-    public ArrayList<Coordinate> getTargetCoordinates(Coordinate c, int state, boolean isKing) {
-        ArrayList<Coordinate> targetCoordinates = new ArrayList<>();
+    public boolean movePiece(Piece selectedPiece, Coordinate dest) {
+        if (selectedPiece.isValidMove(dest)) {
+            Move move = selectedPiece.getMoveTo(dest);
+            if (move.isCapture()) {
+                for (Piece p : move.getCapturedPieces()) {
+                    // Deletes captured pieces
+                    Coordinate c = p.getPos();
+                    board[c.getY()][c.getX()] = null;
+                }
+            }
 
-        int x = c.getX();
-        int y = c.getY();
-
-        // Forward Moves
-        targetCoordinates.add(Coordinate.newCoordinate(x+1, y+state));
-        targetCoordinates.add(Coordinate.newCoordinate(x-1, y+state));
-
-        // Backwards Moves
-        if (isKing) {
-            targetCoordinates.add(Coordinate.newCoordinate(x+1, y-state));
-            targetCoordinates.add(Coordinate.newCoordinate(x-1, y-state));
+            board[dest.getY()][dest.getX()] = selectedPiece;
+            board[selectedPiece.getPos().getY()][selectedPiece.getPos().getX()] = null;
+            selectedPiece.updatePos(dest);
+            return true;
         }
+        else {
+            System.out.println("Invalid move. Try again.");
+            return false;
+        }
+    }
 
-        // Remove nulls
-        targetCoordinates.removeIf(Objects::isNull);
+    // Checks if both sides have valid moves
+    // Returns an int corresponding to win state
+    // 1: White wins, 0: No Winner, -1: Black Wins
+    public int hasWinner() {
+        boolean blackHasValidMove = false;
+        boolean whiteHasValidMove = false;
 
-        return targetCoordinates;
+        for (Piece[] row : board) {
+            for (Piece p : row) if (p != null) {
+                if (p.getState() == -1) {
+                    blackHasValidMove = p.hasValidMoves();
+                }
+                else {
+                    whiteHasValidMove = p.hasValidMoves();
+                }
+
+                // If both have valid moves then there is no winner
+                if (blackHasValidMove && whiteHasValidMove) {
+                    return 0;
+                }
+            }
+        }
+        if (!blackHasValidMove) return 1;
+        else return -1;
     }
 
     // Returns the piece at the given coordinate
