@@ -1,3 +1,10 @@
+/*  Console Checkers
+    Author: Ibrahim Saif
+
+    A 2 Player Checkers game to be played on the command line
+    Written entirely in Java
+ */
+
 import java.util.Scanner;
 
 class Main {
