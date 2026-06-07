@@ -42,6 +42,7 @@ class Coordinate {
     }
 
     // Returns the string form of the Coordinate
+    @Override
     public String toString() {
         return new String(new char[]{letters[x], numbers[y]});
     }

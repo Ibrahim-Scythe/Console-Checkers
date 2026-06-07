@@ -6,30 +6,27 @@ public class Board {
     private Piece[][] board;
     private int currentTurn; // White: 1, Black: -1
 
+    private static final int ROWS = 8;
+    private static final int COLS = 8;
+
     // Constructor
     public Board() {
-        board = new Piece[8][8];
+        board = new Piece[ROWS][COLS];
         currentTurn = -1;
 
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                if ((y == 0 || y == 2) && x % 2 == 1) {
-                    board[y][x] = new Piece (1, x, y);
+        for (int y = 0; y < ROWS; y++) {
+            for (int x = 0; x < COLS; x++) {
+                if ((x + y) % 2 == 1) {
+                    if (y <= 2)
+                        board[y][x] = new Piece(1, x, y);
+                    else if (y >= 5)
+                        board[y][x] = new Piece(-1, x, y);
                 }
-                else if (y == 1 && x % 2 == 0) {
-                    board[y][x] = new Piece (1, x, y);
-                }
-                else if ((y == 5 || y == 7) && x % 2 == 0) {
-                    board[y][x] = new Piece (-1, x, y);
-                }
-                else if (y == 6 && x % 2 == 1) {
-                    board[y][x] = new Piece (-1, x, y);
-                }
-                else {
-                    board[y][x] = null;
-                }
+                else board[y][x] = null;
             }
         }
+
+        updatePieces();
     }
 
     // Returns the current turn;
@@ -62,7 +59,7 @@ public class Board {
         System.out.println("   " + turn);
         if (selectedPiece == null) {
             for (int row : order) {
-                System.out.print( (8 - row) + " |");
+                System.out.print( (ROWS - row) + " |");
                 for (int column : order) {
                     Piece piece = board[row][column];
                     if (piece == null) {
@@ -82,7 +79,7 @@ public class Board {
             Coordinate c;
 
             for (int row : order) {
-                System.out.print( (8 - row) + " |");
+                System.out.print( (ROWS - row) + " |");
                 for (int column : order) {
                     c = Coordinate.newCoordinate(column, row);
                     Piece p = getPiece(c);
@@ -107,8 +104,8 @@ public class Board {
     // Promotes any pieces that can promote
     // Updates possible moves for all pieces
     public void updatePieces() {
-        for (int row = 0; row < 8; row++) {
-            for (Piece piece : board[row]) if (piece != null) {
+        for (Piece[] row : board) {
+            for (Piece piece : row) if (piece != null) {
                     if (piece.canPromote()) piece.promote();
                     getPossibleMoves(piece);
             }
@@ -195,7 +192,6 @@ public class Board {
             return true;
         }
         else {
-            System.out.println("Invalid move. Try again.");
             return false;
         }
     }

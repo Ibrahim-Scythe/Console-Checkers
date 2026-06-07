@@ -44,6 +44,7 @@ class Main {
             boolean successfulMove = board.movePiece(selectedPiece, moveTarget);
 
             if (!successfulMove) {
+                System.out.println("Invalid move. Try again.");
                 continue;
             }
 

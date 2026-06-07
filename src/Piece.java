@@ -22,6 +22,11 @@ class Piece {
         return state;
     }
 
+    // Returns true if the piece is a king, false otherwise
+    public boolean isKing() {
+        return isKing;
+    }
+
     // Promotes the piece to a King piece
     public void promote() {
         isKing = true;
