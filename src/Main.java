@@ -10,6 +10,10 @@ import java.util.Scanner;
 class Main {
     // Run parameters: -noflip board will not flip between turns
     public static void main(String[] args) {
+        playCheckersCLI(args);
+    }
+
+    public static void playCheckersCLI(String[] args) {
         // If ran with the argument 'noflip' the board will not flip between turns
         boolean flipBoard = true;
         if (args.length > 0 && args[0].toLowerCase().contains("-noflip")) {
@@ -19,17 +23,15 @@ class Main {
         Scanner scanner = new Scanner(System.in);
 
         Board board = new Board();
+        Colour winningColour = null;
 
-        board.updatePieces();
-        int winState = 0;
-
-        while (winState == 0) {
+        while (winningColour == null) {
             // Prints the board
             board.printBoard(null, flipBoard);
 
             // Choose Piece
             Piece selectedPiece = board.getPiece(askForCoordinate("Choose a piece: ", scanner));
-            if (selectedPiece == null || selectedPiece.getState() != board.getCurrentTurn()) {
+            if (selectedPiece == null || selectedPiece.getColour() != board.getCurrentPlayerColour()) {
                 System.out.println("Not your piece. Try again.");
                 continue;
             } else if (!selectedPiece.hasValidMoves()) {
@@ -50,12 +52,12 @@ class Main {
 
             // Update Game State
             board.updatePieces();
-            winState = board.hasWinner();
+            winningColour = board.hasWinner();
 
             board.nextTurn();
         }
 
-        if (winState == 1) {
+        if (winningColour == Colour.WHITE) {
             System.out.println("White Wins!");
         } else {
             System.out.println("Black Wins!");
@@ -63,7 +65,7 @@ class Main {
 
         System.out.println("Play Again? (Y/N)");
         String answer = scanner.nextLine();
-        if (answer.equalsIgnoreCase("Y")) main(null);
+        if (answer.equalsIgnoreCase("Y")) main(args);
     }
 
     // Asks the user for a coordinate and returns that coordinate

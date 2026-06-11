@@ -2,24 +2,24 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 // Represents a Checkers piece
-// Has a color, can be king and hold a coordinate of its current position and moves that can be made from that position
+// Has a colour, can be king and hold a coordinate of its current position and moves that can be made from that position
 class Piece {
-    private final int state; // White: 1, Black: -1
+    private final Colour pieceColour;
     private boolean isKing;
     private Coordinate currentPos;
     private ArrayList<Move> possibleMoves;
 
     // Constructor
-    public Piece(int state, int x, int y) {
-        this.state = state;
+    public Piece(Colour colour, int x, int y) {
+        this.pieceColour = colour;
         isKing = false;
         currentPos = Coordinate.newCoordinate(x, y);
         possibleMoves = null;
     }
 
     // Returns the state of the piece
-    public int getState() {
-        return state;
+    public Colour getColour() {
+        return pieceColour;
     }
 
     // Returns true if the piece is a king, false otherwise
@@ -49,10 +49,10 @@ class Piece {
 
     // Returns the symbol representing the piece;
     public char getSymbol() {
-        if (state == 1 && isKing) return '♚';
-        if (state == -1 && isKing) return '♔';
+        if (pieceColour == Colour.WHITE && isKing) return '♚';
+        if (pieceColour == Colour.BLACK && isKing) return '♔';
 
-        if (state == 1) return '◉';
+        if (pieceColour == Colour.WHITE) return '◉';
         else return '◎';
     }
 
@@ -88,17 +88,21 @@ class Piece {
 
         if (c == null) c = currentPos;
 
+        int forward;
+        if (pieceColour == Colour.WHITE) forward = 1;
+        else forward = -1;
+
         int x = c.getX();
         int y = c.getY();
 
         // Forward Moves
-        adjacentCoordinates.add(Coordinate.newCoordinate(x+1, y+state));
-        adjacentCoordinates.add(Coordinate.newCoordinate(x-1, y+state));
+        adjacentCoordinates.add(Coordinate.newCoordinate(x+1, y+forward));
+        adjacentCoordinates.add(Coordinate.newCoordinate(x-1, y+forward));
 
         // Backwards Moves
         if (isKing) {
-            adjacentCoordinates.add(Coordinate.newCoordinate(x+1, y-state));
-            adjacentCoordinates.add(Coordinate.newCoordinate(x-1, y-state));
+            adjacentCoordinates.add(Coordinate.newCoordinate(x+1, y-forward));
+            adjacentCoordinates.add(Coordinate.newCoordinate(x-1, y-forward));
         }
 
         // Remove nulls
@@ -110,6 +114,6 @@ class Piece {
     // Checks if a non-king piece is at the end of the board for its respective side
     public boolean canPromote() {
         if (isKing) return false;
-        return (state == 1 && currentPos.getY() == 7) || (state == -1 && currentPos.getY() == 0);
+        return (pieceColour == Colour.WHITE && currentPos.getY() == 7) || (pieceColour == Colour.BLACK && currentPos.getY() == 0);
     }
 }
