@@ -6,8 +6,8 @@ public class Board {
     private final Piece[][] board;
     private Colour currentPlayerColour;
 
-    private static final int ROWS = 8;
-    private static final int COLS = 8;
+    public static final int ROWS = 8;
+    public static final int COLS = 8;
 
     // Constructor
     public Board() {
@@ -18,7 +18,7 @@ public class Board {
             for (int x = 0; x < COLS; x++) {
                 if ((x + y) % 2 == 1) {
                     if (y <= 2)
-                        board[y][x] = new Piece(Colour.WHITE, x, y);
+                        board[y][x] = new Piece(Colour.RED, x, y);
                     else if (y >= 5)
                         board[y][x] = new Piece(Colour.BLACK, x, y);
                 }
@@ -29,78 +29,17 @@ public class Board {
         updatePieces();
     }
 
-    // Returns the current players colour;
+    // Returns the current players colour
     public Colour getCurrentPlayerColour() {
         return currentPlayerColour;
     }
 
-    // Swaps the currentPlayerColour between Black and White
+    // Swaps the currentPlayerColour between Black and Red
     public void nextTurn() {
-        if (currentPlayerColour == Colour.WHITE)
+        if (currentPlayerColour == Colour.RED)
             currentPlayerColour = Colour.BLACK;
         else
-            currentPlayerColour = Colour.WHITE;
-    }
-
-    // Prints the board
-    // Board will flip between turns if flipBoard is true
-    // If a selectedPiece is given highlights the possible moves
-    public void printBoard(Piece selectedPiece, boolean flipBoard) {
-        String turn = "Black's Turns";
-        int[] order = {0, 1, 2, 3, 4, 5, 6, 7};
-        String lettersRow = "   A B C D E F G H";
-
-        if (currentPlayerColour == Colour.WHITE) {
-            turn = "White's Turns";
-            if (flipBoard) {
-                order = new int[]{7, 6, 5, 4, 3, 2, 1, 0};
-                lettersRow = "   H G F E D C B A";
-            }
-        }
-
-        System.out.println("   " + turn);
-        if (selectedPiece == null) {
-            for (int row : order) {
-                System.out.print( (ROWS - row) + " |");
-                for (int column : order) {
-                    Piece piece = board[row][column];
-                    if (piece == null) {
-                        System.out.print(' ');
-                    }
-                    else {
-                        System.out.print(piece.getSymbol());
-                    }
-                    System.out.print('|');
-                }
-                System.out.println();
-            }
-
-            System.out.println(lettersRow);
-        }
-        else {
-            Coordinate c;
-
-            for (int row : order) {
-                System.out.print( (ROWS - row) + " |");
-                for (int column : order) {
-                    c = Coordinate.newCoordinate(column, row);
-                    Piece p = getPiece(c);
-                    if (p == null && selectedPiece.isValidMove(c)) {
-                        System.out.print("\u001B[32m" + '●' + "\u001B[0m");
-                    }
-                    else if (p == null) {
-                        System.out.print(' ');
-                    }
-                    else {
-                        System.out.print(p.getSymbol());
-                    }
-                    System.out.print('|');
-                }
-                System.out.println();
-            }
-
-            System.out.println(lettersRow);
-        }
+            currentPlayerColour = Colour.RED;
     }
 
     // Promotes any pieces that can promote
@@ -177,6 +116,8 @@ public class Board {
         return followUpMoves;
     }
 
+    // Moves the piece to the given coordinate if it is a valid move
+    // Takes all pieces on the way if it is a capture move
     public boolean movePiece(Piece selectedPiece, Coordinate dest) {
         if (selectedPiece.isValidMove(dest)) {
             Move move = selectedPiece.getMoveTo(dest);
@@ -203,24 +144,24 @@ public class Board {
     // Returns the opposite colour (the winner) if either side has no valid moves
     public Colour hasWinner() {
         boolean blackHasValidMove = false;
-        boolean whiteHasValidMove = false;
+        boolean redHasValidMove = false;
 
         for (Piece[] row : board) {
             for (Piece p : row) if (p != null) {
                 if (p.getColour() == Colour.BLACK && p.hasValidMoves()) {
                     blackHasValidMove = true;
                 }
-                else if (p.getColour() == Colour.WHITE && p.hasValidMoves()) {
-                    whiteHasValidMove = true;
+                else if (p.getColour() == Colour.RED && p.hasValidMoves()) {
+                    redHasValidMove = true;
                 }
 
                 // If both have valid moves then there is no winner
-                if (blackHasValidMove && whiteHasValidMove) {
+                if (blackHasValidMove && redHasValidMove) {
                     return null;
                 }
             }
         }
-        if (!blackHasValidMove) return Colour.WHITE;
+        if (!blackHasValidMove) return Colour.RED;
         else return Colour.BLACK;
     }
 

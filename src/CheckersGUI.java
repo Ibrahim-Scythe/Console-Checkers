@@ -2,29 +2,44 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public class CheckersGUI extends JComponent {
-    private static final int ROWS = 8;
-    private static final int COLS = 8;
-    private static final int SQUARE_SIZE = 80;
+// TODO: Fix Main Class
 
+public class CheckersGUI extends JComponent {
     private final Board board;
     private Piece selectedPiece;
     private Colour winningColour;
 
-    final private BufferedImage redPiece;
-    final private BufferedImage blackPiece;
-    final private BufferedImage redKing;
-    final private BufferedImage blackKing;
-    final private BufferedImage previewCircle;
-    final private BufferedImage pieceHighlight;
+    private static final int SQUARE_SIZE = 80;
+    private final BufferedImage redPiece;
+    private final BufferedImage blackPiece;
+    private final BufferedImage redKing;
+    private final BufferedImage blackKing;
+    private final BufferedImage previewCircle;
+    private final BufferedImage pieceHighlight;
 
+    // Starts the checkers game in a new Swing frame
+    public static void playCheckersGUI() throws IOException {
+        JFrame frame = new JFrame("Checkers");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        Board board = new Board();
+        CheckersGUI checkerboard = new CheckersGUI(board);
+        frame.add(checkerboard);
+
+        frame.pack();
+        frame.setResizable(false);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    // Constructor
     public CheckersGUI(Board board) throws IOException {
         super();
         this.board = board;
@@ -41,7 +56,7 @@ public class CheckersGUI extends JComponent {
 
         addMouseControls();
 
-        setPreferredSize(new Dimension(COLS*SQUARE_SIZE, ROWS*SQUARE_SIZE));
+        setPreferredSize(new Dimension(Board.COLS*SQUARE_SIZE, Board.ROWS*SQUARE_SIZE));
     }
 
     // Converts mouse clicks to a Coordinate
@@ -95,8 +110,8 @@ public class CheckersGUI extends JComponent {
 
     // Draws checkerboard
     public void drawBoard(Graphics g) {
-        for (int r = 0; r < ROWS; r++) {
-            for(int c = 0; c < COLS; c++) {
+        for (int r = 0; r < Board.ROWS; r++) {
+            for(int c = 0; c < Board.COLS; c++) {
                 if ((r + c) % 2 == 1)
                     g.setColor(Color.decode("#644037"));
                 else
@@ -109,17 +124,17 @@ public class CheckersGUI extends JComponent {
 
     // Draws checker pieces
     public void drawPieces(Graphics g) {
-        for (int y = 0; y < ROWS; y++) {
-            for(int x = 0; x < COLS; x++) {
+        for (int y = 0; y < Board.ROWS; y++) {
+            for(int x = 0; x < Board.COLS; x++) {
                 Piece p = board.getPiece(Coordinate.newCoordinate(x, y));
                 if (p == null) continue;
 
                 BufferedImage image;
-                if (p.isKing() && p.getColour()==Colour.WHITE)
+                if (p.isKing() && p.getColour()==Colour.RED)
                     image = redKing;
                 else if (p.isKing() && p.getColour()==Colour.BLACK)
                     image = blackKing;
-                else if (p.getColour()==Colour.WHITE)
+                else if (p.getColour()==Colour.RED)
                     image = redPiece;
                 else
                     image = blackPiece;
@@ -137,8 +152,8 @@ public class CheckersGUI extends JComponent {
     public void drawPossibleMoves(Graphics g) {
         // Highlights pieces that can move this turn
         if (selectedPiece == null) {
-            for (int y = 0; y < ROWS; y++) {
-                for (int x = 0; x < COLS; x++) {
+            for (int y = 0; y < Board.ROWS; y++) {
+                for (int x = 0; x < Board.COLS; x++) {
                     Piece p = board.getPiece(Coordinate.newCoordinate(x, y));
                     if (p == null) continue;
 
@@ -154,8 +169,8 @@ public class CheckersGUI extends JComponent {
             drawImage(pieceHighlight, selectedPiece.getPos().getX(), selectedPiece.getPos().getY(), g);
 
             Coordinate c;
-            for (int y = 0; y < ROWS; y++) {
-                for (int x = 0; x < COLS; x++) {
+            for (int y = 0; y < Board.ROWS; y++) {
+                for (int x = 0; x < Board.COLS; x++) {
                     c = Coordinate.newCoordinate(x, y);
                     Piece p = board.getPiece(c);
                     if (p == null && selectedPiece.isValidMove(c)) {
@@ -200,7 +215,7 @@ public class CheckersGUI extends JComponent {
 
         // Label for which colour won
         String winnerMessage = switch(winningColour) {
-            case WHITE -> "Red Wins!";
+            case RED -> "Red Wins!";
             case BLACK -> "Black Wins!";
         };
         JLabel winnerLabel = new JLabel(winnerMessage, SwingConstants.CENTER);
@@ -213,10 +228,10 @@ public class CheckersGUI extends JComponent {
         buttonWrapper.setOpaque(false);
 
         RoundedButton playAgainBtn = new RoundedButton("Play Again");
-        playAgainBtn.addActionListener(e-> {
+        playAgainBtn.addActionListener(e ->  {
             frame.dispose();
             try {
-                CheckersGUI.main(null);
+                playCheckersGUI();
             }
             catch (IOException e1) {
                 throw new RuntimeException(e1);
@@ -225,9 +240,8 @@ public class CheckersGUI extends JComponent {
         buttonWrapper.add(playAgainBtn);
 
         RoundedButton closeBtn = new RoundedButton("Close");
-        closeBtn.addActionListener(e-> {
-            winDialog.dispose();
-        });
+        closeBtn.addActionListener(e ->
+                winDialog.dispose());
         buttonWrapper.add(closeBtn);
 
         body.add(buttonWrapper, BorderLayout.SOUTH);
@@ -243,19 +257,5 @@ public class CheckersGUI extends JComponent {
             parent = parent.getParent();
         }
         return (JFrame) parent;
-    }
-
-    public static void main(String[] args) throws IOException {
-        JFrame frame = new JFrame("Checkers");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        Board board = new Board();
-        CheckersGUI checkerboard = new CheckersGUI(board);
-        frame.add(checkerboard);
-
-        frame.pack();
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
     }
 }

@@ -4,19 +4,26 @@ Written entirely in Java.
 
 ### Compilation
 - Requires JDK 17+
-- Clone the repository or download the `src` folder.
-Then to compile all the class files, run the command:
+- Clone the repository.
+Then from the root directory, run the command:
 ```bash
-cd src
-javac *.java
+javac src/*.java
 ```
 
 ### Running the game
-In the same folder where the files were compiled run:
+From the root directory, run either:
+#### GUI
 ```bash
-java Main
+java -cp src Main
 ```
-To prevent the board from flipping every turn use parameter `-noflip` e.g.
+#### CLI
+Windows:
 ```bash
-java Main -noflip
+chcp 65001
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+java -cp src Main -cli
+```
+Other: 
+```bash
+java -cp src Main -cli
 ```

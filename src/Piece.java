@@ -48,12 +48,12 @@ class Piece {
     }
 
     // Returns the symbol representing the piece;
-    public char getSymbol() {
-        if (pieceColour == Colour.WHITE && isKing) return '♚';
-        if (pieceColour == Colour.BLACK && isKing) return '♔';
+    public String getSymbol() {
+        if (pieceColour == Colour.RED && isKing) return "\033[31m◉\u001B[0m";
+        if (pieceColour == Colour.BLACK && isKing) return "◎";
 
-        if (pieceColour == Colour.WHITE) return '◉';
-        else return '◎';
+        if (pieceColour == Colour.RED) return "\033[31m●\u001B[0m";
+        else return "◯";
     }
 
     // Returns true if the piece has possible moves and false if not
@@ -89,7 +89,7 @@ class Piece {
         if (c == null) c = currentPos;
 
         int forward;
-        if (pieceColour == Colour.WHITE) forward = 1;
+        if (pieceColour == Colour.RED) forward = 1;
         else forward = -1;
 
         int x = c.getX();
@@ -114,6 +114,6 @@ class Piece {
     // Checks if a non-king piece is at the end of the board for its respective side
     public boolean canPromote() {
         if (isKing) return false;
-        return (pieceColour == Colour.WHITE && currentPos.getY() == 7) || (pieceColour == Colour.BLACK && currentPos.getY() == 0);
+        return (pieceColour == Colour.RED && currentPos.getY() == 7) || (pieceColour == Colour.BLACK && currentPos.getY() == 0);
     }
 }
